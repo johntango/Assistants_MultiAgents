@@ -673,10 +673,10 @@ app.post('/list_tools', async (req, res) => {
             local_tools.push({ "type": "function", "function": details })
         }
     }
-
+    let response = ""
     // add the tools to the assistant if they are not already there
     if (local_tools.length > 0) {
-        const response = await openai.beta.assistants.update(
+        response = await openai.beta.assistants.update(
             assistant_id,
             { "tools": local_tools }
         )
