@@ -1,6 +1,8 @@
 // this is the function that creates a specialized agent on OpenAI Platform
 // 
 import OpenAI from 'openai';
+import { write_assistant_function } from '../write_assistant_function.js';
+
 const execute = async (name, instructions) => {
     // this creates a new agent
     let tools = [];
@@ -18,6 +20,7 @@ const execute = async (name, instructions) => {
         });
     let message = `Agent ${name} created and is ready to use.`
     console.log(message);
+    write_assistant_function(name, instructions);
     return message;
 };
  
