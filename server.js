@@ -625,50 +625,32 @@ async function get_tools(assistant_id) {
     let tools = response.tools;
     return tools;
 }
-
+//
+// this is used to add tools to an assistant and to a thread
+// its best to create a new thread at this time as well 
+// This means any previous context is lost
+//
 app.post('/list_tools', async (req, res) => {
     let assistant_id = focus.assistant_id;
     const functions = await getFunctions();
-    // I want to loop over dictionary called functions and create a tools array
-    /*let mytool = {
-        "type": "function", "function": {
-            "name": "writer_tool",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "name": {
-                        "type": "string",
-                        "description": "The name of the assistant to use. eg writer"
-                    },
-                    "instructions": {
-                        "type": "string",
-                        "description": "The instructions to the assistant. eg Write a story about a dog"
-                    }
-                },
-                "required": [
-                    "name",
-                    "instructions"
-                ]
-            },
-            "description": "This is a fiction writer that can write stories based on instructions"
-        }
-    };
-*/
-    let local_tools = [];
-    //local_tools.push(mytool);
-    let tools = await get_tools(assistant_id);
 
+    let local_tools = [];
+// lets just add all the tools to the assistant
+    //let tools = await get_tools(assistant_id);
+    
     let keys = Object.keys(functions);
     for (let key of keys) {
         let details = functions[key].details;
         // check if the function is already in the tools
         let found = false;
-        for (let tool of tools) {
+        /* for (let tool of tools) {
             if (tool.function.name == key) {
                 found = true;
                 break;
             }
         }
+        */
+       // push all tools into local_tools
         if (!found) {
             local_tools.push({ "type": "function", "function": details })
         }

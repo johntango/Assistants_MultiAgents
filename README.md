@@ -15,8 +15,9 @@ For example a number were deprecated on Jan 4, 2024
 
 # Note on Scope
 
-At present we only allow 1 active Assistant
+We now allow many active Assistants but with one assistant in "Control"
 Note that to attach a file to an Assistant it must have either "retrieve" or "code_interpret" capabilities. At present we create every Assistant with both capabilities.
+
 
 ### Tools: To add functions as tools put them into the "function" sub-directory
 
@@ -34,6 +35,8 @@ A typical run first run the web server "node server.js". This should popup a bro
 ### Assistants
 
 The first row is for the Assistant. Click Create Assistant to create a new Assistant (after the first time you can just use List to load an existing Assistant) You should see the Assistant_ID in the output
+
+### Multi-Assistants - we now have an "AgentMaker" assistant that will create new Assistants but also wrap them up as Tools/Functions that the Control Agent can call. So in this case you send a message "Create Agent named XXX that is an expert on YYY" to the Control Asssistant. It will then trigger the AgentMaker Assistant to create a new Assistant and add it to the Function list.  This means that the LLM can create Agents/Assistants for itself and then execute them. (This is a big deal)
 
 ### Files
 
