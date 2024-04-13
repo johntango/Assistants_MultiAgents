@@ -1,4 +1,3 @@
-// this is the function that runs the writer assistant
 import OpenAI from 'openai';
 import fs from 'fs';
 import { get } from 'http';
@@ -9,21 +8,21 @@ const execute = async (name, instructions) => {
     return message;
 }
 const details = {
-    "name": "critic",
+    "name": "emailcritic",
     "parameters": {
         "type": "object",
         "properties": {
             "name": {
                 "type": "string",
-                "description": "The name of the assistant to use. eg critic"
+                "description": "You are a harsh critic of emails."
             },
             "instructions": {
                 "type": "string",
-                "description": "The story and the instructions for the critic."
+                "description": "The email and the instructions for the emailcritic."
             }
         },
         "required": ["name", "instructions"]
     },
-    "description": "This is a critic of stories passed to it",
+    "description": "This is a critic of emails passed to it",
 };
 export { execute, details };

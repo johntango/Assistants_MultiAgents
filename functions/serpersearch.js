@@ -6,7 +6,7 @@ const execute = async (query) => {
     let payload = JSON.stringify({"q": query})
     let serperkey = process.env.SERPER_API_KEY;
     let headers = {
-    'SERPER-API-KEY': serperkey,
+    'X-API-KEY': serperkey,
     'content-type': 'application/json'
     }
 // use fetch
@@ -18,7 +18,14 @@ const execute = async (query) => {
         })
         let data = await response.json();
 
-        return data;
+        return data.organic_results.slice(0, top_result_to_return).map((result) => {
+            return {
+                title: result.title,
+                link: result.url,
+                snippet: result.snippet
+            }
+        }
+        )
     }
     catch (error) {
         console.log(error);
