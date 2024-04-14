@@ -16,7 +16,7 @@ const run_named_assistant = async (name, instructions) => {
     let thread = await openai.beta.threads.create()
     let thread_id = thread.id;
 
-    // get critic assistant id
+    // get assistant id
     const response = await openai.beta.assistants.list({
         order: "desc",
         limit: 10,
@@ -98,7 +98,7 @@ const write_assistant_function = async (name, instructions) => {
         "properties": {
             "name": {
             "type": "string",
-            "description": "The name of the assistant. eg writer"
+            "description": "The name of the tool. eg writer"
             },
             "instructions": {
             "type": "string",
@@ -121,4 +121,39 @@ const write_assistant_function = async (name, instructions) => {
     });
     return `The ${name} assistant has been created.`
 }
-export { run_named_assistant, write_assistant_function};
+const write_tool_function = async (toolname, thefunc) => {
+
+    let text = `
+    ${thefunc}
+    
+    const details = {
+        "name": "${toolname}",
+        "parameters": {
+        "type": "object",
+        "properties": {
+            "name": {
+            "type": "string",
+            "description": "The name of the tool. eg writer"
+            },
+            "instructions": {
+            "type": "string",
+            "description": "The task for the tool. eg add this sequence of numbers together"
+            }
+        },
+        "required": [
+            "name",
+            "instructions"
+        ]
+        },
+        "description": "This is a ${toolname} that executes a given task"
+    }
+    export { execute, details }; `
+
+    // write a file with the name of the assistant
+    fs.writeFile(`functions/${toolname}.js`, text, (err) => {
+        if (err) throw err;
+        console.log('The file has been saved!');
+    });
+    console.log( `The ${toolname} tool has been created.`);
+}
+export { run_named_assistant, write_assistant_function, write_tool_function};
