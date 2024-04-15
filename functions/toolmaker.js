@@ -15,6 +15,7 @@
         message = message.split('async').slice(1).join('async');
 
         console.log(`output from toolmaker ${message}`)
+        // this writes the tool function to the file
         write_tool_function(name, message);
         console.log(`wrote tool function ${name}`)
         return messages;
@@ -27,7 +28,7 @@
         "properties": {
             "name": {
             "type": "string",
-            "description": "The name of the assistant. eg writer"
+            "description": "The name of the assistant. eg toolwriter"
             },
             "instructions": {
             "type": "string",

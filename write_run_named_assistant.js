@@ -125,27 +125,35 @@ const write_tool_function = async (toolname, thefunc) => {
 
     let text = `
     ${thefunc}
-    
     const details = {
         "name": "${toolname}",
         "parameters": {
-        "type": "object",
-        "properties": {
-            "name": {
-            "type": "string",
-            "description": "The name of the tool. eg writer"
+            "type": "object",
+            "properties": {
+                "input": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    },
+                    "description": "An array of numbers to be summed."
+                }
             },
-            "instructions": {
-            "type": "string",
-            "description": "The task for the tool. eg add this sequence of numbers together"
-            }
+        "required": ["input"],
+        "description": "This function ${toolname} executes the task spe."
+        }
+    }
+
+    const details = {
+        "name": "${toolname}",
+        "parameters": {
+            "type": "array",
+            "items": {
+                "type": "number",
+                "description": "Array of numbers to process"
+            },
+            "description": "An array of numbers for the tool to process"
         },
-        "required": [
-            "name",
-            "instructions"
-        ]
-        },
-        "description": "This is a ${toolname} that executes a given task"
+        "description": "This is a ${toolname} that processes an array of numbers and outputs a result as a string"
     }
     export { execute, details }; `
 

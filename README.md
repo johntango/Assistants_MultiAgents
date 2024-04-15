@@ -33,11 +33,20 @@ A typical run first run the web server "node server.js". This should popup a bro
 
 ### Assistants
 
-The first row is for the Assistant. Click Create Assistant to create a new Assistant (after the first time you can just use List to load an existing Assistant) You should see the Assistant_ID in the output
+The first row is for the Assistant. Click Create Assistant to create a new Assistant (after the first time you can just use List to load an existing Assistant) You should see the Assistant_ID in the output.
+
+#### Note that Assistants can be called as named Tools by wrapping them in "execute" function. See Critic.js and Writer.js which call Assistants of the same name.
 
 ### Multi-Assistants and AgentMaker
 
+#### AgentMaker
+
 We now have an "AgentMaker" assistant creates a new Assistants and wraps them up as Tools/Functions that the Control Agent can call. The AgentMaker is called by the LLM when you send a message "Create Agent named XXX that is an expert on YYY" to the Control Asssistant. It will then trigger the AgentMaker Assistant to create a new Assistant and add it to the Function list. This means that the LLM can create Agents/Assistants for itself and then execute them. (This is a big deal)
+
+#### ToolMaker
+
+We also have "toolmaker" that can create "tool" functions that execute a specific task. Every tool must have an async function called "execute" that has a schema called "details". The schema requires all arguments be wrapped into an object but when the "execute" function is called the items in the object are unwrapped and passed in a JS list/array (needs to be thought out better).
+Toolmaker writes the js file in "write_run_named_assistant.js" so this may need to be edited. The tool itself
 
 ### Files
 
