@@ -2,7 +2,7 @@
     import OpenAI from 'openai';
     import fs from 'fs';
     import { get } from 'http';
-    import { run_named_assistant, write_tool_function} from '../write_run_named_assistant.js';
+    import { run_named_assistant, write_tool_function} from '../workerFunctions.js';
 
     const execute = async (name, instructions) => {
         let messages = await run_named_assistant("toolmaker", instructions);

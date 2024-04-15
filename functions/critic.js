@@ -2,7 +2,7 @@
 import OpenAI from 'openai';
 import fs from 'fs';
 import { get } from 'http';
-import { run_named_assistant } from '../write_run_named_assistant.js';
+import { run_named_assistant } from '../workerFunctions.js';
 
 const execute = async (name, instructions) => {
     let message = await run_named_assistant("critic", instructions);

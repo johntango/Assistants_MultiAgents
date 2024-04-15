@@ -1,41 +1,29 @@
-
+// server.js is the main file that runs the server and handles the API requests. It uses the Express.js framework to create a web server and define routes for handling different API endpoints. The server.js file also includes functions to interact with the OpenAI API and execute tasks such as creating assistants, running assistants, and handling messages in a conversation thread.
 
 import express from 'express';
 import path from 'path';
 const app = express();
 const port = 4000;
 import fs from 'fs';
-import axios from 'axios';
 import OpenAI from 'openai';
-import fileURLToPath from 'url';
-import bodyParser from 'body-parser';
-import { get } from 'http';
 import { URL } from 'url';
+import {openai, __dirname, focus, assistants, tools, get_and_run_tool, extract_assistant_id, create_or_get_assistant, create_thread, getFunctions} from './workerFunctions.js';
+
 //import { OpenAI } from "@langchain/openai"
 //const sqlite3 = require('sqlite3');
 
-let assistants = {}
-//let tools = [{ role:"function", type: "code_interpreter" }, { role:"function",type: "retrieval" }]
-let tools = [];
+
 //const get_weather = require('./functions/get_weather.js');
  
 // Serve static images from the 'images' folder
-const __dirname = new URL('.', import.meta.url).pathname;
 
 app.use(express.static(__dirname +'/images'));
 
-
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-});
 
 // connect to db and get cursor
 // Example usage:
 //const dbPath = 'data/prompts.db';
 //const db = getConnection(dbPath);
-
-// Define global variables focus to keep track of the assistant, file, thread and run
-let focus = { assistant_id: "", assistant_name: "", file_id: "", thread_id: "", message: "", func_name: "", run_id: "", status: "" };
 
 
 // Middleware to parse JSON payloads in POST requests
@@ -74,50 +62,7 @@ app.post('/run_assistant', async (req, res) => {
     res.status(200).json({ message: JSON.stringify(messages), focus: focus });
 });
 
-async function create_or_get_assistant(name, instructions) {
-    const response = await openai.beta.assistants.list({
-        order: "desc",
-        limit: 20,
-    })
-    // loop over all assistants and find the one with the name name
-    let assistant = {};
-    for (let obj in response.data) {
-        assistant = response.data[obj];
-        // change assistant.name to small letters
-        if (assistant.name.toLowerCase() == name.toLowerCase()) {
-            focus.assistant_id = assistant.id;
-            tools = assistant.tools;  // get the tool
-            break
-        }
-    }
-    if (focus.assistant_id == "") {
-        assistant = await openai.beta.assistants.create({
-            name: name,
-            instructions: instructions,
-            tools: tools,
-            model: "gpt-4-1106-preview",
-        });
-        focus.assistant_id = assistant.id
-        focus.assistant_name = name;
-    }
-    return assistant;
-}
-// create a new thread
 
-async function create_thread() {
-        // do we need an intitial system message on the thread?
-    let response = await openai.beta.threads.create(
-            /*messages=[
-            {
-              "role": "user",
-              "content": "Create data visualization based on the trends in this file.",
-              "file_ids": [focus.file_id]
-            }
-          ]*/
-        )
-    focus.thread_id = response.id;
-    return response;
-}
 
 // Define routes
 app.post('/create_assistant', async (req, res) => {
@@ -165,20 +110,6 @@ app.post('/list_assistants', async (req, res) => {
         return console.error('Error:', error);
     }
 })
-function extract_assistant_id(data) {
-    let assistant_id = "";
-    if (data.length > 0) {
-        assistant_id = data[0].id;
-        tools = data[0].tools
-        // loop over assistants and extract all the assistants into a dictionary
-        for (let assistant of data) {
-            assistants[assistant.name] = assistant;
-        }
-    }
-
-    console.log("got assistant_id: " + assistant_id);
-    return { assistant_id: assistant_id, tools: tools }
-}
 
 
 app.post('/delete_assistant', async (req, res) => {
@@ -386,40 +317,6 @@ app.post('/run_status', async (req, res) => {
         res.status(500).json({ message: 'Run Status failed' }, focus);
     }
 })
-// requires action is a special case where we need to call a function
-async function get_and_run_tool(response) {
-    let thread_id = focus.thread_id;
-    let run_id = focus.run_id;
-    // extract function to be called from response
-    const toolCalls = response.required_action.submit_tool_outputs.tool_calls;
-    let toolOutputs = []
-    let functions_available = await getFunctions();
-    for (let toolCall of toolCalls) {
-        console.log("toolCall: " + JSON.stringify(toolCall));
-        let functionName = toolCall.function.name;
-        // get function from functions_available
-        let functionToExecute = functions_available[`${functionName}`];
-
-        if (functionToExecute.execute) {
-            let args = JSON.parse(toolCall.function.arguments);
-            let argsArray = Object.keys(args).map((key) => args[key]);
-            let functionResponse = await functionToExecute.execute(...argsArray);
-            toolOutputs.push({
-                tool_call_id: toolCall.id,
-                output: JSON.stringify(functionResponse)
-            });
-            let text = JSON.stringify({ message: `function ${functionName} called`, focus: focus });
-            await openai.beta.threads.runs.submitToolOutputs(
-                thread_id,
-                run_id,
-                {
-                    tool_outputs: toolOutputs
-                }
-            );
-        }
-        continue;
-    }
-}
 
 app.post('/delete_run', async (req, res) => {
     let thread_id = req.body.thread_id;
@@ -668,24 +565,6 @@ app.post('/list_tools', async (req, res) => {
     //focus.func_name = "crawlDomainGenEmbeds";
     res.status(200).json({ message: JSON.stringify(response), focus: focus });
 })
-async function getFunctions() {
-    const files = fs.readdirSync(path.resolve(__dirname, "./functions"));
-    const openAIFunctions = {};
-
-    for (const file of files) {
-        if (file.endsWith(".js")) {
-            const moduleName = file.slice(0, -3);
-            const modulePath = `./functions/${moduleName}.js`;
-            const { details, execute } = await import(modulePath);
-
-            openAIFunctions[moduleName] = {
-                "details": details,
-                "execute": execute
-            };
-        }
-    }
-    return openAIFunctions;
-};
 
 app.post('/run_function', async (req, res) => {
     // Step 1: send the conversation and available functions to the model

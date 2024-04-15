@@ -2,6 +2,133 @@
 import OpenAI from 'openai';
 import fs from 'fs';
 import { get } from 'http';
+import path from 'path';
+import { URL } from 'url';
+
+const __dirname = new URL('.', import.meta.url).pathname;
+
+let assistants = {}
+//let tools = [{ role:"function", type: "code_interpreter" }, { role:"function",type: "retrieval" }]
+let tools = [];
+
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+});
+// Define global variables focus to keep track of the assistant, file, thread and run
+let focus = { assistant_id: "", assistant_name: "", file_id: "", thread_id: "", message: "", func_name: "", run_id: "", status: "" };
+
+// requires action is a special case where we need to call a function
+async function get_and_run_tool(response) {
+    let thread_id = focus.thread_id;
+    let run_id = focus.run_id;
+    // extract function to be called from response
+    const toolCalls = response.required_action.submit_tool_outputs.tool_calls;
+    let toolOutputs = []
+    let functions_available = await getFunctions();
+    for (let toolCall of toolCalls) {
+        console.log("toolCall: " + JSON.stringify(toolCall));
+        let functionName = toolCall.function.name;
+        // get function from functions_available
+        let functionToExecute = functions_available[`${functionName}`];
+
+        if (functionToExecute.execute) {
+            let args = JSON.parse(toolCall.function.arguments);
+            let argsArray = Object.keys(args).map((key) => args[key]);
+            let functionResponse = await functionToExecute.execute(...argsArray);
+            toolOutputs.push({
+                tool_call_id: toolCall.id,
+                output: JSON.stringify(functionResponse)
+            });
+            let text = JSON.stringify({ message: `function ${functionName} called`, focus: focus });
+            await openai.beta.threads.runs.submitToolOutputs(
+                thread_id,
+                run_id,
+                {
+                    tool_outputs: toolOutputs
+                }
+            );
+        }
+        continue;
+    }
+}
+function extract_assistant_id(data) {
+    let assistant_id = "";
+    if (data.length > 0) {
+        assistant_id = data[0].id;
+        tools = data[0].tools
+        // loop over assistants and extract all the assistants into a dictionary
+        for (let assistant of data) {
+            assistants[assistant.name] = assistant;
+        }
+    }
+
+    console.log("got assistant_id: " + assistant_id);
+    return { assistant_id: assistant_id, tools: tools }
+}
+
+async function create_or_get_assistant(name, instructions) {
+    const response = await openai.beta.assistants.list({
+        order: "desc",
+        limit: 20,
+    })
+    // loop over all assistants and find the one with the name name
+    let assistant = {};
+    for (let obj in response.data) {
+        assistant = response.data[obj];
+        // change assistant.name to small letters
+        if (assistant.name.toLowerCase() == name.toLowerCase()) {
+            focus.assistant_id = assistant.id;
+            tools = assistant.tools;  // get the tool
+            break
+        }
+    }
+    if (focus.assistant_id == "") {
+        assistant = await openai.beta.assistants.create({
+            name: name,
+            instructions: instructions,
+            tools: tools,
+            model: "gpt-4-1106-preview",
+        });
+        focus.assistant_id = assistant.id
+        focus.assistant_name = name;
+    }
+    return assistant;
+}
+// create a new thread
+
+async function create_thread() {
+        // do we need an intitial system message on the thread?
+    let response = await openai.beta.threads.create(
+            /*messages=[
+            {
+              "role": "user",
+              "content": "Create data visualization based on the trends in this file.",
+              "file_ids": [focus.file_id]
+            }
+          ]*/
+        )
+    focus.thread_id = response.id;
+    return response;
+}
+
+async function getFunctions() {
+    const files = fs.readdirSync(path.resolve(__dirname, "./functions"));
+    const openAIFunctions = {};
+
+    for (const file of files) {
+        if (file.endsWith(".js")) {
+            const moduleName = file.slice(0, -3);
+            const modulePath = `./functions/${moduleName}.js`;
+            const { details, execute } = await import(modulePath);
+
+            openAIFunctions[moduleName] = {
+                "details": details,
+                "execute": execute
+            };
+        }
+    }
+    return openAIFunctions;
+}
 
 const run_named_assistant = async (name, instructions) => {
     // this puts a message onto a thread and then runs the assistant on that thread
@@ -162,6 +289,8 @@ const write_tool_function = async (toolname, thefunc) => {
         if (err) throw err;
         console.log('The file has been saved!');
     });
+    // load it into the tools 
+
     console.log( `The ${toolname} tool has been created.`);
 }
-export { run_named_assistant, write_assistant_function, write_tool_function};
+export {openai, __dirname, focus, assistants, tools, get_and_run_tool, extract_assistant_id, create_or_get_assistant, create_thread, getFunctions, run_named_assistant, write_assistant_function, write_tool_function};
