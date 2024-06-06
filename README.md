@@ -18,6 +18,10 @@ For example a number were deprecated on Jan 4, 2024
 We now allow many active Assistants but with one assistant in "Control"
 Note that to attach a file to an Assistant it must have either "retrieve" or "code_interpret" capabilities. At present we create every Assistant with both capabilities.
 
+Tools to write and read data from permanent memory in style of memGPT added 
+Data written to file memory.json in format [{"name", "My name is John"}]
+Data read back by searching for "name" in array
+
 ### Tools: To add functions as tools put them into the "function" sub-directory
 
 All functions in that directory will be loaded to the assistant. We use the style proposed by developersdigest/OpenAI_Function_Toolkit_And_Library You must have both "execute" and "details" variables This allows us to dynamically call functions that the LLM requests
