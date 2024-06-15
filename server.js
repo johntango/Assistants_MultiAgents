@@ -139,7 +139,7 @@ app.post('/upload_file', async (req, res) => {
     }
     try {
         let filestream = fs.createReadStream(file);
-
+    
         let response = await openai.files.create({
             file: filestream,
             purpose: "assistants"
@@ -178,6 +178,30 @@ app.post('/create_file', async (req, res) => {
             message = "Assistant needs to have retrieve or code_interpreter active"
             res.status(200).json({ message: message, focus: focus })
         }
+    }
+});
+
+app.post('/run_whisper', async (req, res) => {
+    focus = req.body;
+    let file = focus.file_id;  // this is the file name 
+    if (!file) {
+        return res.status(400).send('No files were uploaded.');
+    }
+    try {
+        let filestream = fs.createReadStream(file);
+    
+        let response = await openai.audio.transcriptions.create({
+            file: filestream,
+            model: "whisper-1"
+        }
+        )
+        message = "transcription: " + JSON.stringify(response);
+            focus.file_id = response.id;
+            res.status(200).json({ message: message, focus: focus });
+    }
+    catch (error) {
+        console.log(error);
+        res.status(500).json({ message: 'Upload action failed' });
     }
 });
 // check the active assistant (we only allow one to be active at present)

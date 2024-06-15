@@ -18,7 +18,7 @@ For example a number were deprecated on Jan 4, 2024
 We now allow many active Assistants but with one assistant in "Control"
 Note that to attach a file to an Assistant it must have either "retrieve" or "code_interpret" capabilities. At present we create every Assistant with both capabilities.
 
-Tools to write and read data from permanent memory in style of memGPT added 
+Tools to write and read data from permanent memory in style of memGPT added
 Data written to file memory.json in format [{"name", "My name is John"}]
 Data read back by searching for "name" in array
 
@@ -95,3 +95,11 @@ The most sophisticated is the crawlDomain function which will crawl the web to f
 Try "Crawl the Lunarmail.io web site and answer the question "What products does Lunarmail offer?"
 Its modified from btg5679/javascript-openai-web-crawler It will answer question if possible from
 stored embeddings. If not it will crawl the web to find the answer. It makes use of RAG to embed the question ## ## tokens and compare them to the embeddings of the web pages. It uses GPT to figure out "Key" tokens in the question. ## It will then use the best match to answer the question. If it can't find an answer it will use GPT to generate an ## answer. It will then store the answer in the database for future use. You may want to delete crawled_urls.csv and contents.csv to start fresh.
+
+# Digital Human Creation - Lets provide Functions the LLM can call (Initially we will call them by hand)
+
+### Video transcript generation from mp4 video - OpenAI Whisper
+
+### Voice cloning (11Eleven AI) use their API to create voice clone.
+
+### Digital Face HeyGen API
