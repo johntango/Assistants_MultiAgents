@@ -7,7 +7,6 @@ import extractAudio from 'ffmpeg-extract-audio';
 const execute = async (name, data) => {
     extractAudioFromVideo('./path_to_video.mp4', './path_to_output_audio.mp3');
 }
-
 async function extractAudioFromVideo(videoPath, outputPath) {
    try {
       await extractAudio({
