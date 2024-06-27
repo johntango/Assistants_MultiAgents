@@ -440,7 +440,7 @@ async function get_run_status(thread_id, run_id) {
         let message = response;
         focus.status = response.status;
         let tries = 0;
-        while (response.status == 'in_progress' && tries < 10) {
+        while (response.status == 'in_progress' || response.status == "queued" && tries < 10) {
             await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for 1 second
             response = await openai.beta.threads.runs.retrieve(thread_id, run_id);
             tries += 1;
