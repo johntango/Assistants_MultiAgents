@@ -131,22 +131,37 @@ app.post('/delete_assistant', async (req, res) => {
     }
 });
 
+// This works to upload all files in a directory to a vectordb in Assistant
 app.post('/upload_file', async (req, res) => {
-    focus = req.body;
-    let file = focus.file_id;  // this is the file name 
-    if (!file) {
+    // changed behavior to upload all files in a directory 
+    let dirname = req.body.file_id
+    let files = [];
+        // get list of files from directory
+    fs.readdirSync(dirname).forEach(file => {
+        files.push(`${dirname}/${file}`)
+    });
+    if (files.length<1) {
         return res.status(400).send('No files were uploaded.');
     }
     try {
-        let filestream = fs.createReadStream(file);
-    
-        let response = await openai.files.create({
-            file: filestream,
-            purpose: "assistants"
-        }
-        )
-        message = "File Uploaded with id: " + response.id;
-        focus.file_id = response.id;
+        // loop over filelist and create a stream for each file
+        const fileStreams = files.map((path) =>
+            fs.createReadStream(path),
+        );
+        // get all files in the assistant
+ 
+        //let vectordb_id = "vs_2IALcdUrUzzG8gMCXUdSHLqh";
+        // Create a vector store including our two files.
+        let fileIds = [];
+        let vectorStore = await openai.beta.vectorStores.create({
+         name: "CrewAI Docs01",
+        });
+        // get the vector store by its id
+        //vectorStore = await openai.beta.vectorStores.retrieve(vectordb_id);
+        let response = await openai.beta.vectorStores.fileBatches.uploadAndPoll(
+         vectorStore.id, {files:fileStreams});
+          
+        let message = "Files uploaded: " + JSON.stringify(response);
         res.status(200).json({ message: message, focus: focus });
     }
     catch (error) {
@@ -154,6 +169,9 @@ app.post('/upload_file', async (req, res) => {
         res.status(500).json({ message: 'Upload action failed' });
     }
 });
+
+
+
 
 app.post('/create_file', async (req, res) => {
     let data = req.body;
