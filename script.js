@@ -25,7 +25,7 @@ function getFunctions() {
 
 // populate a div with id="functions" with a list of functions to be used in assistant
 
-function updateUI() {
+async function updateUI() {
     let functions = await getFunctions();
     console.log(`functions: ${JSON.stringify(functions)}`);
     function_list = document.getElementById("functions");
@@ -65,7 +65,7 @@ function updateUI() {
 
 let data = {
   assistant_id: "",
-  file_id: "",
+  dir_path: "",
   thread_id: "",
   message: "",
   func_name: "",
@@ -75,7 +75,7 @@ let data = {
 
 function get_data_from_elements() {
   data.assistant_id = document.getElementById("assistant_id").value;
-  data.file_id = document.getElementById("file_id").value;
+  data.dir_path = document.getElementById("dir_path").value;
   data.thread_id = document.getElementById("thread_id").value;
   data.message = document.getElementById("message").value;
   data.func_name = document.getElementById("func_name").value;
@@ -84,7 +84,7 @@ function get_data_from_elements() {
 }
 function write_data_to_elements(data) {
   document.getElementById("assistant_id").value = data.assistant_id;
-  document.getElementById("file_id").value = data.file_id;
+  document.getElementById("dir_path").value = data.dir_path;
   document.getElementById("thread_id").value = data.thread_id;
   document.getElementById("message").value = data.message;
   document.getElementById("func_name").value = data.func_name;

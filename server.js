@@ -131,10 +131,10 @@ app.post('/delete_assistant', async (req, res) => {
     }
 });
 
-// This works to upload all files in a directory to a vectordb in Assistant
-app.post('/upload_file', async (req, res) => {
-    // changed behavior to upload all files in a directory 
-    let dirname = req.body.file_id
+// This uploads all files in a directory to a vectordb attached to an Assistant
+app.post('/upload_files', async (req, res) => {
+
+    let dirname = req.body.dir_path
     let files = [];
         // get list of files from directory
     fs.readdirSync(dirname).forEach(file => {
@@ -170,25 +170,25 @@ app.post('/upload_file', async (req, res) => {
     }
 });
 
-
-
-
+// typical purpose to upload a file to an assistant say for a code interpreter analysis
 app.post('/create_file', async (req, res) => {
+
     let data = req.body;
     // get the assistant id from the request as a string
     let assistant_id = data.assistant_id;
     // check that this assistant has either retrieve or code_interpreter active
     if (check_assistant_capability() == true) {
-        let file_id = data.file_id;  // this is the file id
-        console.log("in create_file assistant_id: " + assistant_id + " file_id: " + file_id);
+        // read the file
+        console.log("in create_file assistant_id: " + assistant_id + " file path: " + data.dir_path);
+        //let file_id = fs.createReadStream(data.dir_path);
+        
         try {
-            let response = await openai.beta.assistants.files.create(
-                assistant_id,
-                {
-                    file_id: file_id
-                }
-            )
-            message = "File Attached to assistant: " + JSON.stringify(response);
+            const response = await openai.files.create({
+                file: fs.createReadStream(data.dir_path),
+                purpose: "assistants",
+              });
+
+            let message = "File Attached to assistant: " + JSON.stringify(response);
             focus.file_id = response.id;
             res.status(200).json({ message: message, focus: focus });
         }

@@ -29,7 +29,7 @@
       let data = {
         assistant_id: "",
         assistant_name: "",
-        file_id: "",
+        dir_path: "",
         thread_id: "",
         message: "",
         func_name: "",
@@ -40,7 +40,7 @@
       function get_data_from_elements() {
         data.assistant_id = document.getElementById("assistant_id").value;
         data.assistant_name = document.getElementById("assistant_name").value;
-        data.file_id = document.getElementById("file_id").value;
+        data.dir_path = document.getElementById("dir_path").value;
         data.thread_id = document.getElementById("thread_id").value;
         data.message = document.getElementById("message").value;
         data.run_id = document.getElementById("run_id").value;
@@ -49,7 +49,7 @@
       function write_data_to_elements(data) {
         document.getElementById("assistant_id").value = data.assistant_id;
         document.getElementById("assistant_name").value = data.assistant_name;
-        document.getElementById("file_id").value = data.file_id;
+        document.getElementById("dir_path").value = data.dir_path;
         document.getElementById("thread_id").value = data.thread_id;
         document.getElementById("message").value = data.message;
         document.getElementById("run_id").value = data.run_id;
@@ -151,7 +151,7 @@
                 />
               </div>
               <div class="col-sm-4">
-                <h4 class="left-side-text">MIT Assistant Builder 0.0.1</h4>
+                <h4 class="left-side-text">MIT Assistant Builder 0.0.3</h4>
               </div>
             </div>
           </div>
@@ -189,20 +189,15 @@
         </button>
         <input type="text" id="assistant_id" name="assistant_id" />
 
-        <label for="file_id" class="label-container">File Load:</label>
+        <label for="dir_path" class="label-container"
+          >File Load from Directory:</label
+        >
         <button
           class="btn btn-primary mr-1"
           type="submit"
-          onclick="sendRequest('upload_file')"
+          onclick="sendRequest('upload_files')"
         >
-          Upload
-        </button>
-        <button
-          class="btn btn-primary mr-1"
-          type="submit"
-          onclick="sendRequest('run_whisper')"
-        >
-          Run Whisper
+          Upload Files
         </button>
         <button
           class="btn btn-primary mr-1"
@@ -225,7 +220,12 @@
         >
           Delete
         </button>
-        <input type="text" id="file_id" name="file_id" />
+        <input
+          type="text"
+          id="dir_path"
+          name="dir_path"
+          value="Input Directory Path"
+        />
 
         <label for="thread_id" class="label-container">Thread ID:</label>
         <button
