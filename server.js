@@ -198,29 +198,38 @@ app.post('/create_file', async (req, res) => {
         }
     }
 });
-
+// this takes all files in a directory and feeds them to whisper to create a single transcription
 app.post('/run_whisper', async (req, res) => {
-    focus = req.body;
-    let file = focus.file_id;  // this is the file name 
-    if (!file) {
+    let dirname = req.body.dir_path
+    let files = [];
+        // get list of files from directory
+    fs.readdirSync(dirname).forEach(file => {
+        files.push(`${dirname}/${file}`)
+    });
+    if (files.length<1) {
         return res.status(400).send('No files were uploaded.');
     }
     try {
-        let filestream = fs.createReadStream(file);
-    
-        let response = await openai.audio.transcriptions.create({
-            file: filestream,
-            model: "whisper-1"
+        // loop over filelist and create a stream for each file
+        // output all text into one file
+        output_text = "";
+        for (let file of files) {
+            let filestream = fs.createReadStream(file);
+        
+            let transcription = await openai.audio.transcriptions.create({
+                file: filestream,
+                model: "whisper-1"
+                }
+            )
+            output_text += transcription.text;
         }
-        )
-        message = "transcription: " + JSON.stringify(response);
-            focus.file_id = response.id;
-            res.status(200).json({ message: message, focus: focus });
-    }
-    catch (error) {
+        // write the output text to a file
+        fs.writeFileSync("transcription.txt", output_text);
+    } catch (error) {
         console.log(error);
-        res.status(500).json({ message: 'Upload action failed' });
+        res.status(500).json({ message: 'Whisper action failed' });
     }
+
 });
 // check the active assistant (we only allow one to be active at present)
 function check_assistant_capability() {
