@@ -204,7 +204,10 @@ app.post('/run_whisper', async (req, res) => {
     let files = [];
         // get list of files from directory
     fs.readdirSync(dirname).forEach(file => {
-        files.push(`${dirname}/${file}`)
+        // filter for audio files
+        if (file.endsWith(".wav") || file.endsWith(".mp3")){
+            files.push(`${dirname}/${file}`);
+        }
     });
     if (files.length<1) {
         return res.status(400).send('No files were uploaded.');
@@ -212,7 +215,7 @@ app.post('/run_whisper', async (req, res) => {
     try {
         // loop over filelist and create a stream for each file
         // output all text into one file
-        output_text = "";
+        let output_text = "";
         for (let file of files) {
             let filestream = fs.createReadStream(file);
         
