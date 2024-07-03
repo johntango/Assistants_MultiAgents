@@ -8,6 +8,8 @@ import fs from 'fs';
 import OpenAI from 'openai';
 import { URL } from 'url';
 import {openai, __dirname, focus, assistants, tools, get_and_run_tool, extract_assistant_id, create_or_get_assistant, create_thread, getFunctions} from './workerFunctions.js';
+import { get } from 'http';
+import { types } from 'util';
 
 //import { OpenAI } from "@langchain/openai"
 //const sqlite3 = require('sqlite3');
@@ -198,17 +200,13 @@ app.post('/create_file', async (req, res) => {
         }
     }
 });
-// this takes all files in a directory and feeds them to whisper to create a single transcription
+// this takes all files in a directory and feeds them to whisper to create a single transcription but with each document given metadata header
 app.post('/run_whisper', async (req, res) => {
     let dirname = req.body.dir_path
-    let files = [];
+    let types = ["wav", "mp3", "mp4"]
+    let files = get_files_from_directory(dirname, types);
         // get list of files from directory
-    fs.readdirSync(dirname).forEach(file => {
-        // filter for audio files
-        if (file.endsWith(".wav") || file.endsWith(".mp3")){
-            files.push(`${dirname}/${file}`);
-        }
-    });
+   
     if (files.length<1) {
         return res.status(400).send('No files were uploaded.');
     }
@@ -224,7 +222,10 @@ app.post('/run_whisper', async (req, res) => {
                 model: "whisper-1"
                 }
             )
-            output_text += transcription.text;
+            // we need to give each transcription a header and keywords to make it useful
+            let metadata = await generateMetadata(transcription.text);
+
+            output_text += metadata;
         }
         // write the output text to a file
         fs.writeFileSync("transcription.txt", output_text);
@@ -234,6 +235,41 @@ app.post('/run_whisper', async (req, res) => {
     }
 
 });
+async function get_files_from_directory(dirname, types) {
+
+    let files = [];
+    // get list of files from directory
+    fs.readdirSync(dirname).forEach(file => {
+        // filter for audio files in types
+        if (types.includes(file.split('.').pop())) {
+            files.push(`${dirname}/${file}`);
+        }
+    });
+    return files;
+}
+// hit LLM to generate metadata for text input 
+async function generateMetadata(textContent) {
+    if (textContent.length < 100) {
+        console.log(`Text is too short to generate metadata`);
+        return null;
+    }
+  const prompt = `Generate metadata for the following text with author as John R Williams unless another author is found:\n\n${textContent}`;
+  
+  try {
+    const response = await openai.completions.create({
+        model: "gpt-3.5-turbo-instruct", 
+        prompt: prompt,
+        max_tokens: 200,  // Adjust the token count based on your needs
+        temperature: 0.7,
+    });
+    let message = `Metadata: \n  ${response.choices[0].text} \n\n Original Text: \n ${textContent}`;
+    
+    return message
+  } catch (error) {
+    console.error(`Error generating metadata: ${error.message}`);
+    return null;
+  }
+}
 // check the active assistant (we only allow one to be active at present)
 function check_assistant_capability() {
     if (tools[0].type == "code_interpreter" || tools[0].type == "retrieval") {
@@ -241,8 +277,34 @@ function check_assistant_capability() {
     }
     else { return false }
 }
+// get the news are write to news directory
+app.post('/news_path', async (req, res) => {
+    let dirname = req.body.dir_path;
+    let topic = req.body.news_path;
+// get news from newsapi and write to a file to news directory with name + date
+    let news = await get_news(topic);
+    let date = new Date();
+    let filename = `${dirname}/news_${date}.txt`;
+    // write or create file and write 
+    fs.writeFileSync(filename, news);
 
-// list files and put the latest file id into focus
+    res.status(200).json(  {"message": `News written to file:  ${filename}`});
+})
+async function get_news(topic){
+   
+    let api_key = process.env.NEWSAPI_API_KEY;
+    const url = `https://newsapi.org/v2/top-headlines?country=us&apiKey=${api_key}`;
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+    return JSON.stringify(data.articles);
+  }
+    catch (error) {
+        console.error("Error occurred while getting country:", error);
+        throw error;
+    }
+}
+
 app.post('/list_files', async (req, res) => {
 
     let data = req.body;

@@ -3,7 +3,7 @@ require("dotenv").config();
 const path = require("path");
 const fs = require("fs");
 console.log("Welcome to the Assistant!\n");
-function getFunctions() {
+async function getFunctions() {
     const files = fs.readdirSync(path.resolve(__dirname, "./functions"));
     const openAIFunctions = {};
 
@@ -66,6 +66,7 @@ async function updateUI() {
 let data = {
   assistant_id: "",
   dir_path: "",
+  news_path: "",
   thread_id: "",
   message: "",
   func_name: "",
@@ -75,7 +76,8 @@ let data = {
 
 function get_data_from_elements() {
   data.assistant_id = document.getElementById("assistant_id").value;
-  data.dir_path = document.getElementById("dir_path").value;
+  data.dir_path  = document.getElementById("dir_path").value;
+  data.news_path = document.getElementById("news_path").value;
   data.thread_id = document.getElementById("thread_id").value;
   data.message = document.getElementById("message").value;
   data.func_name = document.getElementById("func_name").value;
@@ -85,6 +87,7 @@ function get_data_from_elements() {
 function write_data_to_elements(data) {
   document.getElementById("assistant_id").value = data.assistant_id;
   document.getElementById("dir_path").value = data.dir_path;
+  document.getElementById("news_path").value = data.news_path;
   document.getElementById("thread_id").value = data.thread_id;
   document.getElementById("message").value = data.message;
   document.getElementById("func_name").value = data.func_name;

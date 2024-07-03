@@ -30,6 +30,7 @@
         assistant_id: "",
         assistant_name: "",
         dir_path: "",
+        news_path: "",
         thread_id: "",
         message: "",
         func_name: "",
@@ -41,6 +42,7 @@
         data.assistant_id = document.getElementById("assistant_id").value;
         data.assistant_name = document.getElementById("assistant_name").value;
         data.dir_path = document.getElementById("dir_path").value;
+        data.news_path = document.getElementById("news_path").value;
         data.thread_id = document.getElementById("thread_id").value;
         data.message = document.getElementById("message").value;
         data.run_id = document.getElementById("run_id").value;
@@ -50,6 +52,7 @@
         document.getElementById("assistant_id").value = data.assistant_id;
         document.getElementById("assistant_name").value = data.assistant_name;
         document.getElementById("dir_path").value = data.dir_path;
+        document.getElementById("news_path").value = data.news_path;
         document.getElementById("thread_id").value = data.thread_id;
         document.getElementById("message").value = data.message;
         document.getElementById("run_id").value = data.run_id;
@@ -232,6 +235,19 @@
           id="dir_path"
           name="dir_path"
           value="Input Directory Path"
+        />
+        <button
+          class="btn btn-primary mr-1"
+          type="submit"
+          onclick="sendRequest('news_path')"
+        >
+          Get News Feed
+        </button>
+        <input
+          type="text"
+          id="news_path"
+          name="news_path"
+          value="Input News Topic"
         />
 
         <label for="thread_id" class="label-container">Thread ID:</label>
